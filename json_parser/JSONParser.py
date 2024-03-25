@@ -64,14 +64,12 @@ def parseObject(data):
         if value[0] == '{':
             valueEnd = findEnd(value, '{')
             thisValue = parseObject(value[:valueEnd+1])
-            data = value[valueEnd+1:]
-            
-
+            data = value[valueEnd+1:]        
         elif value[0] == '[':
-            AssertionError("Unimplemented")
-            valueEnd = findEnd(value, ']')
-            thisValue = parseArray(value)
-            # xxx reduce data       
+           
+            valueEnd = findEnd(value, '[')
+            thisValue = parseArray(value[:valueEnd+1])
+            data = value[valueEnd+1:]        
             
         else:
             endValueIndex = value.find(',')
@@ -92,38 +90,34 @@ def parseObject(data):
 def parseArray(data): 
     returnList = []
     data = data.strip()
-    if data and data[0] == ',':
-        data = data[1,:]
+    
     if not (data.startswith('[') and data.endswith(']')):
         raise Exception("The input data does not begin and end with square brackets")
     data = data[1:-1]
-    
-    
-    start_open_bracket = data.find('[')       
-    if (start_open_bracket != -1):
-        beforeBracket = data[:start_open_bracket]
-        if (',' in beforeBracket):            
-            for item in beforeBracket.split(','):
-                if item:
-                    returnList.append(parsePrimitive(item))
-    else:
-        elems = data.split(',')
-        for item in elems:
-            returnList.append(parsePrimitive(item))
-    start_close_bracket = -1    
-    if (start_open_bracket != -1):
-        start_close_bracket = data.find(']')
-        if (start_close_bracket == -1):
-            raise Exception("Mismatched square brackets")
-        nestedArray = data[start_open_bracket:start_close_bracket+1]
-        returnList.append(parseArray(nestedArray))
+    while data:
+        data = data.strip()
+        if data and data[0] == ',':
+            data = data[1:].strip()
 
-    if start_close_bracket != -1:
-        afterBracket = data[start_close_bracket+1:]
-        if (',' in afterBracket):
-            for item in afterBracket.split(','):
-                if item:
-                    returnList.append(parsePrimitive(item))
+        if data[0] == '{':
+            valueEnd = findEnd(data, '{')
+            thisValue = parseObject(data[:valueEnd+1])
+            data = data[valueEnd+1:]
+        elif data[0] == '[':
+            valueEnd = findEnd(data, '[')
+            thisValue = parseArray(data[:valueEnd+1])
+            data = data[valueEnd+1:]    
+        else:
+            endValueIndex = data.find(',')
+            if endValueIndex == -1:
+                thisValue = parsePrimitive(data)
+                data = []
+            else:
+                thisValue = parsePrimitive(data[:endValueIndex])
+                data = data[endValueIndex+1:]
+
+        returnList.append(thisValue)
+    
     return returnList
 
 
